@@ -89,6 +89,27 @@ impl<T> HeapBuffer<T> {
         self.cap_
     }
 
+    /// Reallocates the heap and forces the capacity of `self` to `new\_capacity` .
+    ///
+    /// # Safety
+    ///
+    /// - The behavior is undefined if `new\_capacity` is 0.
+    /// - `new_capacity` must be greater than or equals to `len` .
+    pub unsafe fn set_capacity<A>(&mut self, new_capacity: usize, alloc: &A)
+    where
+        A: GlobalAlloc,
+    {
+        debug_assert_ne!(0, new_capacity);
+        debug_assert!(self.len() <= new_capacity);
+
+        let layout = self.layout();
+        let new_size = new_capacity * size_of::<T>();
+        let ptr = unsafe { alloc.realloc(self.ptr as *mut u8, layout, new_size) as *mut T };
+
+        self.ptr = check_alloc(ptr);
+        self.cap_ = new_capacity;
+    }
+
     /// Returns a raw pointer to the buffer.
     pub fn as_ptr(&self) -> *const T {
         self.ptr
@@ -195,6 +216,22 @@ mod tests {
 
             assert_eq!(0, b.len());
             assert!(i <= b.capacity());
+
+            b.pre_drop(&alloc);
+        }
+    }
+
+    #[test]
+    fn set_capacity() {
+        for i in 1..10 {
+            let alloc = TestAllocator::new();
+            let mut b = unsafe { HeapBuffer::<String>::with_capacity(i, &alloc) };
+
+            for j in 1..10 {
+                unsafe { b.set_capacity(j, &alloc) };
+                assert_eq!(0, b.len());
+                assert!(j <= b.capacity());
+            }
 
             b.pre_drop(&alloc);
         }
