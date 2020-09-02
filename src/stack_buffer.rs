@@ -62,7 +62,7 @@ impl<T> StackBuffer<T> {
     pub unsafe fn set_len(&mut self, new_len: usize) {
         debug_assert!(self.is_available());
         debug_assert!(new_len <= Self::capacity());
-        debug_assert!(new_len <= u8::MAX);
+        debug_assert!(new_len <= u8::MAX as usize);
         self.len_ = new_len as u8;
     }
 
@@ -93,6 +93,15 @@ impl<T> StackBuffer<T> {
     /// Disable to use `self` .
     pub fn disable(&mut self) {
         self.len_ = u8::MAX;
+    }
+}
+
+#[cfg(test)]
+impl<T> Drop for StackBuffer<T> {
+    fn drop(&mut self) {
+        if self.is_available() {
+            assert_eq!(0, self.len());
+        }
     }
 }
 
