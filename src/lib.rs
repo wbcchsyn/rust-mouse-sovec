@@ -42,5 +42,7 @@
 //!
 //! To avoid allocating as much as possible, the performance is better than that of `std::collections::Vec` .
 
+mod heap_buffer;
+
 #[cfg(test)]
 mod allocator;
