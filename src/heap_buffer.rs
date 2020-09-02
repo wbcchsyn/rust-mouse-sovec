@@ -39,6 +39,34 @@ pub struct HeapBuffer<T> {
 }
 
 impl<T> HeapBuffer<T> {
+    /// Allocates heap memory using `alloc` and creates a new instance whose capacity is greater than or
+    /// equals to `capacity` .
+    ///
+    /// # Safety
+    ///
+    /// `capacity` must not be 0.
+    ///
+    /// # Panics
+    ///
+    /// Panics if failed to allocate heap memory.
+    pub unsafe fn with_capacity<A>(capacity: usize, alloc: &A) -> Self
+    where
+        A: GlobalAlloc,
+    {
+        debug_assert_ne!(0, capacity);
+
+        let size = capacity * size_of::<T>();
+        let align = align_of::<T>();
+        let layout = Layout::from_size_align(size, align).expect(alloc_error_message());
+
+        let ptr = unsafe { alloc.alloc(layout) as *mut T };
+        Self {
+            ptr: check_alloc(ptr),
+            len_: 0,
+            cap_: capacity,
+        }
+    }
+
     /// Returns the number of elements.
     pub fn len(&self) -> usize {
         self.len_
@@ -129,5 +157,46 @@ impl<T> HeapBuffer<T> {
 impl<T> Drop for HeapBuffer<T> {
     fn drop(&mut self) {
         assert!(self.ptr.is_null());
+    }
+}
+
+fn check_alloc<T>(ptr: *mut T) -> *mut T {
+    if ptr.is_null() {
+        panic!(alloc_error_message());
+    }
+
+    ptr
+}
+
+fn alloc_error_message() -> &'static str {
+    "Failed to allocate heap memory."
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::allocator::TestAllocator;
+
+    #[test]
+    fn constructor() {
+        for i in 1..10 {
+            let alloc = TestAllocator::new();
+            let mut b = unsafe { HeapBuffer::<String>::with_capacity(i, &alloc) };
+
+            assert_eq!(0, b.len());
+            assert!(i <= b.capacity());
+
+            b.pre_drop(&alloc);
+        }
+
+        for i in 1..10 {
+            let alloc = TestAllocator::new();
+            let mut b = unsafe { HeapBuffer::<u8>::with_capacity(i, &alloc) };
+
+            assert_eq!(0, b.len());
+            assert!(i <= b.capacity());
+
+            b.pre_drop(&alloc);
+        }
     }
 }
