@@ -29,11 +29,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use core::sync::atomic::AtomicI64;
+use core::sync::atomic::{AtomicI64, Ordering};
 
 /// Wrappter of `std::alloc::System` .
 /// It counts allocation and deallocation, and check the both
 /// numbers are same on drop.
 pub struct TestAllocator {
     count: AtomicI64,
+}
+
+impl Drop for TestAllocator {
+    fn drop(&mut self) {
+        if self.count.load(Ordering::Relaxed) != 0 {
+            panic!("Memory Leak!");
+        }
+    }
 }
