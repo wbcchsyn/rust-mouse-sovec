@@ -34,3 +34,10 @@ pub struct HeapBuffer<T> {
     len_: usize,
     cap_: usize,
 }
+
+#[cfg(test)]
+impl<T> Drop for HeapBuffer<T> {
+    fn drop(&mut self) {
+        assert!(self.ptr.is_null());
+    }
+}
