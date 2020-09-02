@@ -29,18 +29,55 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![deny(missing_docs)]
+use core::sync::atomic::{AtomicI64, Ordering};
+use std::alloc::{GlobalAlloc, Layout, System};
 
-//! # mouse\_sovec
-//!
-//! `mouse\_sovec` defines `SoVec` for `mouse`, which behaves like `std::collections::Vec` .
-//!
-//! (`SoVec` stands for `Small optimized Vector` .)
-//!
-//! `SoVec` will not allocate heap if the requested memory size is small enough.
-//! Instead of heap, it uses itself as a buffer then.
-//!
-//! To avoid allocating as much as possible, the performance is better than that of `std::collections::Vec` .
+/// Wrappter of `std::alloc::System` .
+/// It counts allocation and deallocation, and check the both
+/// numbers are same on drop.
+pub struct TestAllocator {
+    count: AtomicI64,
+}
 
-#[cfg(test)]
-mod allocator;
+impl TestAllocator {
+    /// Creates a new instance.
+    pub const fn new() -> Self {
+        Self {
+            count: AtomicI64::new(0),
+        }
+    }
+}
+
+unsafe impl GlobalAlloc for TestAllocator {
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+        let system = System;
+        let ptr = system.alloc(layout);
+
+        if !ptr.is_null() {
+            self.count.fetch_add(1, Ordering::Acquire);
+        }
+
+        ptr
+    }
+
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+        assert_eq!(false, ptr.is_null());
+
+        let system = System;
+        let c = self.count.fetch_sub(1, Ordering::Release);
+
+        if c <= 0 {
+            panic!("Calls dealloc() too many times");
+        }
+
+        system.dealloc(ptr, layout);
+    }
+}
+
+impl Drop for TestAllocator {
+    fn drop(&mut self) {
+        if self.count.load(Ordering::Relaxed) != 0 {
+            panic!("Memory Leak!");
+        }
+    }
+}
