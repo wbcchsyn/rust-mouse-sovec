@@ -35,6 +35,40 @@ pub struct HeapBuffer<T> {
     cap_: usize,
 }
 
+impl<T> HeapBuffer<T> {
+    /// Returns the number of elements.
+    pub fn len(&self) -> usize {
+        self.len_
+    }
+
+    /// Forces the length of `self` to `new\_len` .
+    ///
+    /// # Safety
+    ///
+    /// - `new\_len` must be less than or equal to `capacity` .
+    /// - The elements at old_len..new\_len must be initialized when extending.
+    /// - The elements at new_len..old\_len must be dropped when shrinking.
+    pub unsafe fn set_len(&mut self, new_len: usize) {
+        debug_assert!(new_len <= self.capacity());
+        self.len_ = new_len;
+    }
+
+    /// Returns the number of elements which `self` can hold without reallocating.
+    pub fn capacity(&self) -> usize {
+        self.cap_
+    }
+
+    /// Returns a raw pointer to the buffer.
+    pub fn as_ptr(&self) -> *const T {
+        self.ptr
+    }
+
+    /// Returns a raw pointer to the buffer.
+    pub fn as_mut_ptr(&mut self) -> *mut T {
+        self.ptr
+    }
+}
+
 #[cfg(test)]
 impl<T> Drop for HeapBuffer<T> {
     fn drop(&mut self) {
