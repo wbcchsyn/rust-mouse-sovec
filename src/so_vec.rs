@@ -29,6 +29,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::heap_buffer::HeapBuffer;
 use crate::stack_buffer::StackBuffer;
 use core::alloc::GlobalAlloc;
 
@@ -55,5 +56,35 @@ where
     /// returns false.
     fn is_using_stack(&self) -> bool {
         self.buffer.is_available()
+    }
+
+    /// Returns `self.bufer` .
+    fn as_stack(&self) -> &StackBuffer<T> {
+        debug_assert!(self.is_using_stack());
+        &self.buffer
+    }
+
+    /// Returns `self.bufer` .
+    fn as_mut_stack(&mut self) -> &mut StackBuffer<T> {
+        debug_assert!(self.is_using_stack());
+        &mut self.buffer
+    }
+
+    /// Forces to regards `self.buffer` as HeapBuffer and returns it.
+    fn as_heap(&self) -> &HeapBuffer<T> {
+        debug_assert_eq!(false, self.is_using_stack());
+        let ptr = &self.buffer as *const StackBuffer<T>;
+        let ptr = ptr as *const u8;
+        let ptr = ptr as *const HeapBuffer<T>;
+        unsafe { &*ptr }
+    }
+
+    /// Forces to regards `self.buffer` as HeapBuffer and returns it.
+    fn as_mut_heap(&mut self) -> &mut HeapBuffer<T> {
+        debug_assert_eq!(false, self.is_using_stack());
+        let ptr = &mut self.buffer as *mut StackBuffer<T>;
+        let ptr = ptr as *mut u8;
+        let ptr = ptr as *mut HeapBuffer<T>;
+        unsafe { &mut *ptr }
     }
 }
