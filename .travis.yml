@@ -1,0 +1,16 @@
+language: rust
+rust:
+    - stable
+git:
+    depth: 1
+    quiet: true
+    submodules: false
+before_install:
+    - rustup component add rustfmt
+script:
+    - cargo build --verbose --all
+    - cargo-fmt --verbose -- --check
+    - cargo doc --verbose --lib --no-deps
+    - cargo test --release --verbose --all
+jobs:
+    fast_finish: false
