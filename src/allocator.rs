@@ -39,6 +39,15 @@ pub struct TestAllocator {
     count: AtomicI64,
 }
 
+impl TestAllocator {
+    /// Creates a new instance.
+    pub const fn new() -> Self {
+        Self {
+            count: AtomicI64::new(0),
+        }
+    }
+}
+
 unsafe impl GlobalAlloc for TestAllocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         let system = System;
