@@ -29,6 +29,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use core::alloc::Layout;
+use core::mem::{align_of, size_of};
+
 pub struct HeapBuffer<T> {
     ptr: *mut T,
     len_: usize,
@@ -66,6 +69,14 @@ impl<T> HeapBuffer<T> {
     /// Returns a raw pointer to the buffer.
     pub fn as_mut_ptr(&mut self) -> *mut T {
         self.ptr
+    }
+
+    /// Returns the layout allocating the heap.
+    fn layout(&self) -> Layout {
+        let size = size_of::<T>() * self.capacity();
+        let align = align_of::<T>();
+
+        unsafe { Layout::from_size_align_unchecked(size, align) }
     }
 }
 
