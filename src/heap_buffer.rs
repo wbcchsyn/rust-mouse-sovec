@@ -29,7 +29,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use core::alloc::Layout;
+use core::alloc::{GlobalAlloc, Layout};
 use core::mem::{align_of, size_of};
 
 pub struct HeapBuffer<T> {
@@ -69,6 +69,51 @@ impl<T> HeapBuffer<T> {
     /// Returns a raw pointer to the buffer.
     pub fn as_mut_ptr(&mut self) -> *mut T {
         self.ptr
+    }
+
+    /// Deallocates the owing heap buffer.
+    ///
+    /// `pre_drop` must be called before dropped and `self` must not be used after that.
+    ///
+    /// Because `HeapBuffer` does not have the allocator, Drop implementation can't do this.
+    ///
+    /// # Warnings
+    ///
+    /// This method do just deallocation.
+    /// The elements must be dropped in advance.
+    #[cfg(not(test))]
+    pub fn pre_drop<A>(&mut self, alloc: &A)
+    where
+        A: GlobalAlloc,
+    {
+        unsafe {
+            alloc.dealloc(self.as_mut_ptr() as *mut u8, self.layout());
+        }
+    }
+
+    /// Deallocates the owing heap buffer.
+    ///
+    /// `pre_drop` must be called before dropped and `self` must not be used after that.
+    ///
+    /// Because `HeapBuffer` does not have the allocator, Drop implementation can't do this.
+    ///
+    /// # Warnings
+    ///
+    /// This method do just deallocation.
+    /// The elements must be dropped in advance.
+    #[cfg(test)]
+    pub fn pre_drop<A>(&mut self, alloc: &A)
+    where
+        A: GlobalAlloc,
+    {
+        assert_eq!(0, self.len());
+        assert_eq!(false, self.as_ptr().is_null());
+
+        unsafe {
+            alloc.dealloc(self.as_mut_ptr() as *mut u8, self.layout());
+        }
+
+        self.ptr = core::ptr::null_mut();
     }
 
     /// Returns the layout allocating the heap.
