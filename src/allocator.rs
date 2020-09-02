@@ -30,12 +30,39 @@
 // limitations under the License.
 
 use core::sync::atomic::{AtomicI64, Ordering};
+use std::alloc::{GlobalAlloc, Layout, System};
 
 /// Wrappter of `std::alloc::System` .
 /// It counts allocation and deallocation, and check the both
 /// numbers are same on drop.
 pub struct TestAllocator {
     count: AtomicI64,
+}
+
+unsafe impl GlobalAlloc for TestAllocator {
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+        let system = System;
+        let ptr = system.alloc(layout);
+
+        if !ptr.is_null() {
+            self.count.fetch_add(1, Ordering::Acquire);
+        }
+
+        ptr
+    }
+
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+        assert_eq!(false, ptr.is_null());
+
+        let system = System;
+        let c = self.count.fetch_sub(1, Ordering::Release);
+
+        if c <= 0 {
+            panic!("Calls dealloc() too many times");
+        }
+
+        system.dealloc(ptr, layout);
+    }
 }
 
 impl Drop for TestAllocator {
