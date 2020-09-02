@@ -28,3 +28,43 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+use crate::heap_buffer::HeapBuffer;
+use core::marker::PhantomData;
+use core::mem::size_of;
+
+type Buffer0 = usize;
+type Buffer1 = [u8; size_of::<HeapBuffer<u8>>() - 1];
+type Len = u8;
+
+#[repr(C)]
+pub struct StackBuffer<T> {
+    _buf0: Buffer0,
+    _buf1: Buffer1,
+    len_: Len,
+    _marker: PhantomData<T>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use core::mem::align_of;
+
+    #[test]
+    fn size() {
+        assert_eq!(
+            size_of::<HeapBuffer<u8>>() + size_of::<usize>(),
+            size_of::<StackBuffer<u8>>()
+        );
+        assert_eq!(
+            size_of::<HeapBuffer<usize>>() + size_of::<usize>(),
+            size_of::<StackBuffer<usize>>()
+        );
+    }
+
+    #[test]
+    fn align() {
+        assert!(align_of::<HeapBuffer<u8>>() <= align_of::<StackBuffer<u8>>());
+        assert!(align_of::<HeapBuffer<usize>>() <= align_of::<StackBuffer<usize>>());
+    }
+}
