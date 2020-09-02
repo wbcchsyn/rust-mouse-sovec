@@ -79,6 +79,16 @@ impl<T> StackBuffer<T> {
         let ptr = &mut self._buf0 as *mut usize;
         ptr as *mut T
     }
+
+    /// Returns true if `self` can be used, or false.
+    pub fn is_available(&self) -> bool {
+        self.len_ != u8::MAX
+    }
+
+    /// Disable to use `self` .
+    pub fn disable(&mut self) {
+        self.len_ = u8::MAX;
+    }
 }
 
 #[cfg(test)]
