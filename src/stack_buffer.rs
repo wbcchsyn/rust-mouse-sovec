@@ -48,6 +48,7 @@ pub struct StackBuffer<T> {
 impl<T> StackBuffer<T> {
     /// Returns the number of elements.
     pub fn len(&self) -> usize {
+        debug_assert!(self.is_available());
         self.len_ as usize
     }
 
@@ -59,7 +60,9 @@ impl<T> StackBuffer<T> {
     /// - The elements at old_len..new\_len must be initialized when extending.
     /// - The elements at new_len..old\_len must be dropped when shrinking.
     pub unsafe fn set_len(&mut self, new_len: usize) {
+        debug_assert!(self.is_available());
         debug_assert!(new_len <= Self::capacity());
+        debug_assert!(new_len <= u8::MAX);
         self.len_ = new_len as u8;
     }
 
@@ -70,12 +73,14 @@ impl<T> StackBuffer<T> {
 
     /// Returns a raw pointer to the buffer.
     pub fn as_ptr(&self) -> *const T {
+        debug_assert!(self.is_available());
         let ptr = &self._buf0 as *const usize;
         ptr as *const T
     }
 
     /// Returns a raw pointer to the buffer.
     pub fn as_mut_ptr(&mut self) -> *mut T {
+        debug_assert!(self.is_available());
         let ptr = &mut self._buf0 as *mut usize;
         ptr as *mut T
     }
