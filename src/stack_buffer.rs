@@ -45,6 +45,13 @@ pub struct StackBuffer<T> {
     _marker: PhantomData<T>,
 }
 
+impl<T> StackBuffer<T> {
+    /// Returns the max number of the elements `StackBuffer` can hold.
+    pub const fn capacity() -> usize {
+        (size_of::<Buffer0>() + size_of::<Buffer1>()) / size_of::<T>()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -66,5 +73,29 @@ mod tests {
     fn align() {
         assert!(align_of::<HeapBuffer<u8>>() <= align_of::<StackBuffer<u8>>());
         assert!(align_of::<HeapBuffer<usize>>() <= align_of::<StackBuffer<usize>>());
+    }
+
+    #[test]
+    fn capacity() {
+        let buffer_size = size_of::<StackBuffer<u8>>() - size_of::<Len>();
+
+        assert_eq!(buffer_size / size_of::<u8>(), StackBuffer::<u8>::capacity());
+
+        assert_eq!(
+            buffer_size / size_of::<usize>(),
+            StackBuffer::<usize>::capacity()
+        );
+
+        type Foo = [u8; 3];
+        assert_eq!(
+            buffer_size / size_of::<Foo>(),
+            StackBuffer::<Foo>::capacity()
+        );
+
+        type Bar = [u8; 1024];
+        assert_eq!(
+            buffer_size / size_of::<Bar>(),
+            StackBuffer::<Bar>::capacity()
+        );
     }
 }
