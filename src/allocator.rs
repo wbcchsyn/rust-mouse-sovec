@@ -28,3 +28,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+use core::sync::atomic::AtomicI64;
+
+/// Wrappter of `std::alloc::System` .
+/// It counts allocation and deallocation, and check the both
+/// numbers are same on drop.
+pub struct TestAllocator {
+    count: AtomicI64,
+}
