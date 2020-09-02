@@ -28,3 +28,21 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+use crate::stack_buffer::StackBuffer;
+use core::alloc::GlobalAlloc;
+
+/// `SoVec` stands for `Small optimized Vector` .
+///
+/// `SoVec` behaves like `std::collections::Vec`, however, it will not allocate heap memory
+/// if the requested memory size is small enough.
+/// Instead of heap, it uses itself as a buffer then.
+///
+/// To avoid allocating as much as possible, the performance is better than that of `std::collections::Vec` .
+pub struct SoVec<T, A>
+where
+    A: GlobalAlloc,
+{
+    buffer: StackBuffer<T>,
+    alloc: A,
+}
