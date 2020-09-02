@@ -46,3 +46,14 @@ where
     buffer: StackBuffer<T>,
     alloc: A,
 }
+
+impl<T, A> SoVec<T, A>
+where
+    A: GlobalAlloc,
+{
+    /// Returns true if `self` is using StackBuffer; otherwise, i.e. `self` is using `HeapBuffer`,
+    /// returns false.
+    fn is_using_stack(&self) -> bool {
+        self.buffer.is_available()
+    }
+}
