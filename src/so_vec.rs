@@ -174,6 +174,18 @@ where
     }
 }
 
+impl<T, A> From<A> for SoVec<T, A>
+where
+    A: GlobalAlloc,
+{
+    fn from(alloc: A) -> Self {
+        Self {
+            buffer: StackBuffer::<T>::new(),
+            alloc,
+        }
+    }
+}
+
 impl<T, A> Drop for SoVec<T, A>
 where
     A: GlobalAlloc,
@@ -184,6 +196,36 @@ where
         if !self.is_using_stack() {
             let alloc = &self.alloc as *const A;
             unsafe { self.as_mut_heap().pre_drop(&*alloc) };
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::allocator::TestAllocator;
+
+    #[test]
+    fn from() {
+        {
+            let alloc = TestAllocator::new();
+            let v = SoVec::<u8, TestAllocator>::from(alloc);
+
+            assert_eq!(0, v.len());
+        }
+
+        {
+            let alloc = TestAllocator::new();
+            let v = SoVec::<String, TestAllocator>::from(alloc);
+
+            assert_eq!(0, v.len());
+        }
+
+        {
+            let alloc = TestAllocator::new();
+            let v = SoVec::<[u8; 3], TestAllocator>::from(alloc);
+
+            assert_eq!(0, v.len());
         }
     }
 }
