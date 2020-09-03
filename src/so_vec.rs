@@ -32,7 +32,7 @@
 use crate::heap_buffer::HeapBuffer;
 use crate::stack_buffer::StackBuffer;
 use core::alloc::GlobalAlloc;
-use core::convert::AsRef;
+use core::convert::{AsMut, AsRef};
 
 /// `SoVec` stands for `Small optimized Vector` .
 ///
@@ -263,6 +263,15 @@ where
 {
     fn as_ref(&self) -> &[T] {
         unsafe { core::slice::from_raw_parts(self.as_ptr(), self.len()) }
+    }
+}
+
+impl<T, A> AsMut<[T]> for SoVec<T, A>
+where
+    A: GlobalAlloc,
+{
+    fn as_mut(&mut self) -> &mut [T] {
+        unsafe { core::slice::from_raw_parts_mut(self.as_mut_ptr(), self.len()) }
     }
 }
 
