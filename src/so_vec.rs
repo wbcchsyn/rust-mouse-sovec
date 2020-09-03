@@ -52,6 +52,65 @@ impl<T, A> SoVec<T, A>
 where
     A: GlobalAlloc,
 {
+    /// Returns the number of the elements `self` is holding.
+    pub fn len(&self) -> usize {
+        if self.is_using_stack() {
+            self.as_stack().len()
+        } else {
+            self.as_heap().len()
+        }
+    }
+
+    /// Forces the length of `self` to `new\_len` .
+    ///
+    /// # Safety
+    ///
+    /// - `new\_len` must be less than or equal to `capacity` .
+    /// - The elements at old_len..new\_len must be initialized when extending.
+    /// - The elements at new_len..old\_len must be dropped when shrinking.
+    pub unsafe fn set_len(&mut self, new_len: usize) {
+        if self.is_using_stack() {
+            self.as_mut_stack().set_len(new_len);
+        } else {
+            self.as_mut_heap().set_len(new_len);
+        }
+    }
+
+    /// Returns the number of the elements `self` can hold without allocating.
+    pub fn capacity(&self) -> usize {
+        if self.is_using_stack() {
+            StackBuffer::<T>::capacity()
+        } else {
+            self.as_heap().capacity()
+        }
+    }
+
+    /// Returns a raw pointer to the buffer of `self` .
+    ///
+    /// The caller must ensure that `self` outlives the pointer this function returns,
+    /// or else it will end up pointing to garbage. Modifying or moving `self` may cause
+    /// its buffer to be reallocated, which would also make any pointers to it invalid.
+    pub fn as_ptr(&self) -> *const T {
+        if self.is_using_stack() {
+            self.as_stack().as_ptr()
+        } else {
+            self.as_heap().as_ptr()
+        }
+    }
+
+    /// Returns a raw pointer to the buffer of `self` .
+    ///
+    /// The caller must ensure that `self` outlives the pointer this function returns,
+    /// or else it will end up pointing to garbage. Modifying or moving `self` may cause
+    /// its buffer to be reallocated, which would also make any pointers to it invalid.
+    pub fn as_mut_ptr(&mut self) -> *mut T {
+        if self.is_using_stack() {
+            self.as_mut_stack().as_mut_ptr()
+        } else {
+            self.as_mut_heap().as_mut_ptr()
+        }
+    }
+
     /// Returns true if `self` is using StackBuffer; otherwise, i.e. `self` is using `HeapBuffer`,
     /// returns false.
     fn is_using_stack(&self) -> bool {
