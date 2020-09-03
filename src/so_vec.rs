@@ -133,6 +133,22 @@ where
         }
     }
 
+    /// Appends `elm` to the end of `self` .
+    ///
+    /// The caller must ensure that `self` has sufficient capacity in advance.
+    ///
+    /// # Safety
+    ///
+    /// The behavior is undefined if `self.len` is greater than or equals to
+    /// `self.capacity` .
+    pub unsafe fn push(&mut self, elm: T) {
+        debug_assert!(self.len() < self.capacity());
+
+        let ptr = self.as_mut_ptr().add(self.len());
+        core::ptr::write(ptr, elm);
+        self.set_len(self.len() + 1);
+    }
+
     /// Returns a raw pointer to the buffer of `self` .
     ///
     /// The caller must ensure that `self` outlives the pointer this function returns,
@@ -360,6 +376,48 @@ mod tests {
                 assert_eq!(0, v.len());
                 assert!(i <= v.capacity());
                 assert!(j <= v.capacity());
+            }
+        }
+    }
+
+    #[test]
+    fn push() {
+        {
+            let origin: Vec<u8> = (0..=u8::MAX).collect();
+
+            let mut v = SoVec::<u8, TestAllocator>::default();
+            let init_capacity = v.capacity();
+
+            for i in 0..init_capacity {
+                unsafe { v.push(i as u8) };
+                assert_eq!(&origin[0..=i], v.as_ref());
+            }
+
+            for i in init_capacity..=(u8::MAX as usize) {
+                unsafe {
+                    v.reserve_exact(1);
+                    v.push(i as u8);
+                }
+                assert_eq!(&origin[0..=i], v.as_ref());
+            }
+        }
+        {
+            let origin: Vec<String> = (0..=u8::MAX).map(|i| i.to_string()).collect();
+
+            let mut v = SoVec::<String, TestAllocator>::default();
+            let init_capacity = v.capacity();
+
+            for i in 0..init_capacity {
+                unsafe { v.push(i.to_string()) };
+                assert_eq!(&origin[0..=i], v.as_ref());
+            }
+
+            for i in init_capacity..=3 * init_capacity {
+                unsafe {
+                    v.reserve_exact(1);
+                    v.push(i.to_string());
+                }
+                assert_eq!(&origin[0..=i], v.as_ref());
             }
         }
     }
