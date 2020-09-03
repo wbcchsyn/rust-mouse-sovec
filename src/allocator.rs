@@ -81,3 +81,9 @@ impl Drop for TestAllocator {
         }
     }
 }
+
+impl Default for TestAllocator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
