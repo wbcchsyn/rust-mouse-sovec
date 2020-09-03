@@ -31,7 +31,7 @@
 
 use crate::heap_buffer::HeapBuffer;
 use core::marker::PhantomData;
-use core::mem::size_of;
+use core::mem::{size_of, MaybeUninit};
 
 type Buffer0 = usize;
 type Buffer1 = [u8; size_of::<HeapBuffer<u8>>() - 1];
@@ -46,6 +46,18 @@ pub struct StackBuffer<T> {
 }
 
 impl<T> StackBuffer<T> {
+    /// Create a new empty instance.
+    pub fn new() -> Self {
+        unsafe {
+            Self {
+                _buf0: MaybeUninit::uninit().assume_init(),
+                _buf1: MaybeUninit::uninit().assume_init(),
+                len_: 0,
+                _marker: PhantomData,
+            }
+        }
+    }
+
     /// Returns the number of elements.
     pub fn len(&self) -> usize {
         debug_assert!(self.is_available());
