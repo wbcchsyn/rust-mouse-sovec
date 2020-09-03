@@ -103,6 +103,35 @@ where
         }
     }
 
+    /// Reserves the minimum capacity to insert `additional` more elements.
+    ///
+    /// After this method is called, `self.capacity` will return the number
+    /// to be greater than or equals to `self.len() + additional` .
+    ///
+    /// # Panics
+    ///
+    /// Panics on heap allocation failure.
+    pub fn reserve_exact(&mut self, additional: usize) {
+        let new_capacity = self.len() + additional;
+
+        if new_capacity <= self.capacity() {
+            return;
+        }
+
+        unsafe {
+            if self.is_using_stack() {
+                let mut heap_buffer = HeapBuffer::<T>::with_capacity(new_capacity, &self.alloc);
+                std::ptr::copy_nonoverlapping(self.as_ptr(), heap_buffer.as_mut_ptr(), self.len());
+                heap_buffer.set_len(self.len());
+
+                self.to_heap(heap_buffer);
+            } else {
+                let alloc = &self.alloc as *const A;
+                self.as_mut_heap().set_capacity(new_capacity, &*alloc);
+            }
+        }
+    }
+
     /// Returns a raw pointer to the buffer of `self` .
     ///
     /// The caller must ensure that `self` outlives the pointer this function returns,
@@ -286,6 +315,33 @@ mod tests {
 
             assert_eq!(0, v.len());
             assert!(i <= v.capacity());
+        }
+    }
+
+    #[test]
+    fn reserve_exact() {
+        for i in 0..(StackBuffer::<u8>::capacity() + 10) {
+            let alloc = TestAllocator::new();
+            let mut v = SoVec::<u8, TestAllocator>::with_capacity(i, alloc);
+
+            for j in 0..(StackBuffer::<u8>::capacity() + 10) {
+                v.reserve_exact(j);
+                assert_eq!(0, v.len());
+                assert!(i <= v.capacity());
+                assert!(j <= v.capacity());
+            }
+        }
+
+        for i in 0..(StackBuffer::<String>::capacity() + 10) {
+            let alloc = TestAllocator::new();
+            let mut v = SoVec::<String, TestAllocator>::with_capacity(i, alloc);
+
+            for j in 0..(StackBuffer::<String>::capacity() + 10) {
+                v.reserve_exact(j);
+                assert_eq!(0, v.len());
+                assert!(i <= v.capacity());
+                assert!(j <= v.capacity());
+            }
         }
     }
 }
