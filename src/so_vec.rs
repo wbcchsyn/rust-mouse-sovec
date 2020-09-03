@@ -111,6 +111,25 @@ where
         }
     }
 
+    /// Enshortens `self`, keeping the first `new_len` elements and dropping the rest.
+    ///
+    /// If `new_len` is greater than or equals to the current length, nothing is done.
+    ///
+    /// Note that this method does not have any effect on the allocated capacity of `self` .
+    pub fn truncate(&mut self, new_len: usize) {
+        if self.len() <= new_len {
+            return;
+        }
+
+        unsafe {
+            for i in new_len..self.len() {
+                core::ptr::drop_in_place(self.as_mut_ptr().add(i));
+            }
+
+            self.set_len(new_len);
+        }
+    }
+
     /// Returns true if `self` is using StackBuffer; otherwise, i.e. `self` is using `HeapBuffer`,
     /// returns false.
     fn is_using_stack(&self) -> bool {
