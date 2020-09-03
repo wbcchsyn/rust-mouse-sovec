@@ -111,6 +111,13 @@ where
         }
     }
 
+    /// Removes the all elements keeping the allocated capacity, and set the length 0.
+    ///
+    /// Note this has the same effect to `self.truncate(0)` .
+    pub fn clear(&mut self) {
+        self.truncate(0);
+    }
+
     /// Enshortens `self`, keeping the first `new_len` elements and dropping the rest.
     ///
     /// If `new_len` is greater than or equals to the current length, nothing is done.
