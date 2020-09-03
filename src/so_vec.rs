@@ -173,3 +173,17 @@ where
         unsafe { &mut *ptr }
     }
 }
+
+impl<T, A> Drop for SoVec<T, A>
+where
+    A: GlobalAlloc,
+{
+    fn drop(&mut self) {
+        self.clear();
+
+        if !self.is_using_stack() {
+            let alloc = &self.alloc as *const A;
+            unsafe { self.as_mut_heap().pre_drop(&*alloc) };
+        }
+    }
+}
