@@ -52,6 +52,24 @@ impl<T, A> SoVec<T, A>
 where
     A: GlobalAlloc,
 {
+    /// Creates a new empty instance whose capacity is greater than or equals to `capacity` .
+    ///
+    /// # Panics
+    ///
+    /// Panics on heap memory allocation failure.
+    pub fn with_capacity(capacity: usize, alloc: A) -> Self {
+        let mut ret = Self::from(alloc);
+
+        if StackBuffer::<T>::capacity() < capacity {
+            unsafe {
+                let heap_buffer = HeapBuffer::<T>::with_capacity(capacity, &ret.alloc);
+                ret.to_heap(heap_buffer);
+            }
+        }
+
+        ret
+    }
+
     /// Returns the number of the elements `self` is holding.
     pub fn len(&self) -> usize {
         if self.is_using_stack() {
@@ -172,6 +190,20 @@ where
         let ptr = ptr as *mut HeapBuffer<T>;
         unsafe { &mut *ptr }
     }
+
+    /// Disables small optimization forces to overwrite `self.stack` .
+    ///
+    /// Note that this method does not move each element.
+    unsafe fn to_heap(&mut self, new_buffer: HeapBuffer<T>) {
+        debug_assert!(self.is_using_stack());
+
+        let ptr = &mut self.buffer as *mut StackBuffer<T>;
+        let ptr = ptr as *mut u8;
+        let ptr = ptr as *mut HeapBuffer<T>;
+
+        core::ptr::write(ptr, new_buffer);
+        self.as_mut_stack().disable();
+    }
 }
 
 impl<T, A> From<A> for SoVec<T, A>
@@ -235,6 +267,25 @@ mod tests {
             let v = SoVec::<[u8; 3], TestAllocator>::from(alloc);
 
             assert_eq!(0, v.len());
+        }
+    }
+
+    #[test]
+    fn with_capacity() {
+        for i in 0..(StackBuffer::<u8>::capacity() + 10) {
+            let alloc = TestAllocator::new();
+            let v = SoVec::<u8, TestAllocator>::with_capacity(i, alloc);
+
+            assert_eq!(0, v.len());
+            assert!(i <= v.capacity());
+        }
+
+        for i in 0..(StackBuffer::<String>::capacity() + 10) {
+            let alloc = TestAllocator::new();
+            let v = SoVec::<String, TestAllocator>::with_capacity(i, alloc);
+
+            assert_eq!(0, v.len());
+            assert!(i <= v.capacity());
         }
     }
 }
