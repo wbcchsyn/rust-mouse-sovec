@@ -32,6 +32,7 @@
 use crate::heap_buffer::HeapBuffer;
 use crate::stack_buffer::StackBuffer;
 use core::alloc::GlobalAlloc;
+use core::convert::AsRef;
 
 /// `SoVec` stands for `Small optimized Vector` .
 ///
@@ -253,6 +254,15 @@ where
 {
     fn default() -> Self {
         Self::from(A::default())
+    }
+}
+
+impl<T, A> AsRef<[T]> for SoVec<T, A>
+where
+    A: GlobalAlloc,
+{
+    fn as_ref(&self) -> &[T] {
+        unsafe { core::slice::from_raw_parts(self.as_ptr(), self.len()) }
     }
 }
 
