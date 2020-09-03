@@ -186,6 +186,15 @@ where
     }
 }
 
+impl<T, A> Default for SoVec<T, A>
+where
+    A: GlobalAlloc + Default,
+{
+    fn default() -> Self {
+        Self::from(A::default())
+    }
+}
+
 impl<T, A> Drop for SoVec<T, A>
 where
     A: GlobalAlloc,
