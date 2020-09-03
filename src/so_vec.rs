@@ -33,6 +33,7 @@ use crate::heap_buffer::HeapBuffer;
 use crate::stack_buffer::StackBuffer;
 use core::alloc::GlobalAlloc;
 use core::convert::{AsMut, AsRef};
+use core::mem::MaybeUninit;
 
 /// `SoVec` stands for `Small optimized Vector` .
 ///
@@ -147,6 +148,20 @@ where
         let ptr = self.as_mut_ptr().add(self.len());
         core::ptr::write(ptr, elm);
         self.set_len(self.len() + 1);
+    }
+
+    /// Removes the last element and returns it if any.
+    pub fn pop(&mut self) -> Option<T> {
+        if self.len() == 0 {
+            None
+        } else {
+            unsafe {
+                self.set_len(self.len() - 1);
+                let mut elm = MaybeUninit::uninit();
+                std::ptr::copy_nonoverlapping(self.as_ptr().add(self.len()), elm.as_mut_ptr(), 1);
+                Some(elm.assume_init())
+            }
+        }
     }
 
     /// Returns a raw pointer to the buffer of `self` .
@@ -419,6 +434,46 @@ mod tests {
                 }
                 assert_eq!(&origin[0..=i], v.as_ref());
             }
+        }
+    }
+
+    #[test]
+    fn pop() {
+        {
+            let alloc = TestAllocator::new();
+            let mut v = SoVec::<u8, TestAllocator>::with_capacity((u8::MAX as usize) + 1, alloc);
+            assert_eq!(None, v.pop());
+
+            for i in 0..=u8::MAX {
+                unsafe {
+                    v.push(i);
+                }
+            }
+
+            for i in (0..=u8::MAX).rev() {
+                assert_eq!(Some(i), v.pop());
+            }
+
+            assert_eq!(None, v.pop());
+        }
+
+        {
+            let alloc = TestAllocator::new();
+            let mut v =
+                SoVec::<String, TestAllocator>::with_capacity((u8::MAX as usize) + 1, alloc);
+            assert_eq!(None, v.pop());
+
+            for i in 0..=u8::MAX {
+                unsafe {
+                    v.push(i.to_string());
+                }
+            }
+
+            for i in (0..=u8::MAX).rev() {
+                assert_eq!(Some(i.to_string()), v.pop());
+            }
+
+            assert_eq!(None, v.pop());
         }
     }
 }
