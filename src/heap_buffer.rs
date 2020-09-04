@@ -59,7 +59,7 @@ impl<T> HeapBuffer<T> {
         let align = align_of::<T>();
         let layout = Layout::from_size_align(size, align).expect(alloc_error_message());
 
-        let ptr = unsafe { alloc.alloc(layout) as *mut T };
+        let ptr = alloc.alloc(layout) as *mut T;
         Self {
             ptr: check_alloc(ptr),
             len_: 0,
@@ -104,7 +104,7 @@ impl<T> HeapBuffer<T> {
 
         let layout = self.layout();
         let new_size = new_capacity * size_of::<T>();
-        let ptr = unsafe { alloc.realloc(self.ptr as *mut u8, layout, new_size) as *mut T };
+        let ptr = alloc.realloc(self.ptr as *mut u8, layout, new_size) as *mut T;
 
         self.ptr = check_alloc(ptr);
         self.cap_ = new_capacity;
