@@ -42,6 +42,9 @@ use core::mem::MaybeUninit;
 /// Instead of heap, it uses itself as a buffer then.
 ///
 /// To avoid allocating as much as possible, the performance is better than that of `std::collections::Vec` .
+///
+/// Some unsafe methods behavior is different from the same name method of `std::collections::Vec` ;
+/// otherwise, (i.e. the all safe methods) behaves like that of `std::collections::Vec` .
 pub struct SoVec<T, A>
 where
     A: GlobalAlloc,
