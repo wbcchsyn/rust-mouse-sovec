@@ -11,6 +11,7 @@ script:
     - cargo build --verbose --all
     - cargo-fmt --verbose -- --check
     - cargo doc --verbose --lib --no-deps
+    - cargo test --verbose --all
     - cargo test --release --verbose --all
 jobs:
     fast_finish: false
