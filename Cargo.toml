@@ -1,6 +1,6 @@
 [package]
-name = "rust-mouse-sovec"
-version = "0.1.0"
+name = "mouse-sovec"
+version = "0.1.1"
 authors = ["Yoshida Shin <wbcchsyn@gmail.com>"]
 edition = "2018"
 
