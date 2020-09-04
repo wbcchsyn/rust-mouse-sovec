@@ -226,6 +226,17 @@ where
         }
     }
 
+    /// Shrinks the capacitance of `self` as much as possible.
+    pub fn shrink_to_fit(&mut self) {
+        if self.is_using_stack() {
+            return;
+        } else {
+            let alloc = &self.alloc as *const A;
+            let new_capacity = self.len();
+            unsafe { self.as_mut_heap().set_capacity(new_capacity, &*alloc) };
+        }
+    }
+
     /// Returns true if `self` is using StackBuffer; otherwise, i.e. `self` is using `HeapBuffer`,
     /// returns false.
     fn is_using_stack(&self) -> bool {
