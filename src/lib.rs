@@ -46,5 +46,7 @@ mod heap_buffer;
 mod so_vec;
 mod stack_buffer;
 
+pub use so_vec::SoVec;
+
 #[cfg(test)]
 mod allocator;
