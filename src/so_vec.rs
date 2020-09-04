@@ -176,10 +176,19 @@ where
 
     /// Returns a raw pointer to the buffer of `self` .
     ///
+    /// # Warnings
+    ///
     /// The caller must ensure that `self` outlives the pointer this function returns,
     /// or else it will end up pointing to garbage. Modifying or moving `self` may cause
     /// its buffer to be reallocated, which would also make any pointers to it invalid.
-    pub fn as_ptr(&self) -> *const T {
+    ///
+    /// # Safety
+    ///
+    /// This method itself is safe, however, moving `self` can invalidate the returned value
+    /// unlike to the same name methods of `std::collections::Vec` .
+    ///
+    /// `unsafe` modifier is added to alert it.
+    pub unsafe fn as_ptr(&self) -> *const T {
         if self.is_using_stack() {
             self.as_stack().as_ptr()
         } else {
@@ -189,10 +198,19 @@ where
 
     /// Returns a raw pointer to the buffer of `self` .
     ///
+    /// # Warnings
+    ///
     /// The caller must ensure that `self` outlives the pointer this function returns,
     /// or else it will end up pointing to garbage. Modifying or moving `self` may cause
     /// its buffer to be reallocated, which would also make any pointers to it invalid.
-    pub fn as_mut_ptr(&mut self) -> *mut T {
+    ///
+    /// # Safety
+    ///
+    /// This method itself is safe, however, moving `self` can invalidate the returned value
+    /// unlike to the same name methods of `std::collections::Vec` .
+    ///
+    /// `unsafe` modifier is added to alert it.
+    pub unsafe fn as_mut_ptr(&mut self) -> *mut T {
         if self.is_using_stack() {
             self.as_mut_stack().as_mut_ptr()
         } else {
