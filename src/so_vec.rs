@@ -81,6 +81,11 @@ where
         }
     }
 
+    /// Returns true if `self` is not holding any element, or false.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Forces the length of `self` to `new\_len` .
     ///
     /// # Safety
