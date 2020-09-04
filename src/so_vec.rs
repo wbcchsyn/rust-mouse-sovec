@@ -54,6 +54,11 @@ impl<T, A> SoVec<T, A>
 where
     A: GlobalAlloc,
 {
+    /// Creates a new empty instance.
+    pub fn new(alloc: A) -> Self {
+        Self::from(alloc)
+    }
+
     /// Creates a new empty instance whose capacity is greater than or equals to `capacity` .
     ///
     /// # Panics
