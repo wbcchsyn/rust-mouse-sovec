@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["SoVec","`SoVec` stands for `Small optimized Vector` ."]]});
