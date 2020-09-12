@@ -31,6 +31,7 @@
 
 use core::alloc::{GlobalAlloc, Layout};
 use core::mem::{align_of, size_of};
+use std::alloc::handle_alloc_error;
 
 pub struct HeapBuffer<T> {
     ptr: *mut T,
@@ -45,23 +46,25 @@ impl<T> HeapBuffer<T> {
     /// # Safety
     ///
     /// `capacity` must not be 0.
-    ///
-    /// # Panics
-    ///
-    /// Panics if failed to allocate heap memory.
     pub unsafe fn with_capacity<A>(capacity: usize, alloc: &A) -> Self
     where
         A: GlobalAlloc,
     {
         debug_assert_ne!(0, capacity);
 
-        let size = capacity * size_of::<T>();
+        let size = capacity
+            .checked_mul(size_of::<T>())
+            .expect("Allocating memory size is too large.");
         let align = align_of::<T>();
-        let layout = Layout::from_size_align(size, align).expect(alloc_error_message());
+        let layout = Layout::from_size_align(size, align).unwrap_or_else(|e| panic!("{}", e));
 
         let ptr = alloc.alloc(layout) as *mut T;
+        if ptr.is_null() {
+            handle_alloc_error(layout);
+        }
+
         Self {
-            ptr: check_alloc(ptr),
+            ptr,
             len_: 0,
             cap_: capacity,
         }
@@ -103,11 +106,19 @@ impl<T> HeapBuffer<T> {
         debug_assert!(self.len() <= new_capacity);
 
         let layout = self.layout();
-        let new_size = new_capacity * size_of::<T>();
+        let new_size = new_capacity
+            .checked_mul(size_of::<T>())
+            .expect("Allocating memory size is too large.");
         let ptr = alloc.realloc(self.ptr as *mut u8, layout, new_size) as *mut T;
 
-        self.ptr = check_alloc(ptr);
-        self.cap_ = new_capacity;
+        if ptr.is_null() {
+            let layout = Layout::from_size_align(new_size, layout.align())
+                .unwrap_or_else(|e| panic!("{}", e));
+            handle_alloc_error(layout);
+        } else {
+            self.ptr = ptr;
+            self.cap_ = new_capacity;
+        }
     }
 
     /// Returns a raw pointer to the buffer.
@@ -179,18 +190,6 @@ impl<T> Drop for HeapBuffer<T> {
     fn drop(&mut self) {
         assert!(self.ptr.is_null());
     }
-}
-
-fn check_alloc<T>(ptr: *mut T) -> *mut T {
-    if ptr.is_null() {
-        panic!(alloc_error_message());
-    }
-
-    ptr
-}
-
-fn alloc_error_message() -> &'static str {
-    "Failed to allocate heap memory."
 }
 
 #[cfg(test)]
