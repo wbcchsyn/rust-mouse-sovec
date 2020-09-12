@@ -10,3 +10,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 ## 0.1.1 - 2020-09-12
 ### Changed
 - Rename package.
+
+
+## 0.1.2 - 2020-09-12
+### Changed
+- Error message.
+- Refactor.
