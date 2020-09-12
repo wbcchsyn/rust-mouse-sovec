@@ -31,9 +31,9 @@
 
 #![deny(missing_docs)]
 
-//! # mouse\_sovec
+//! # mouse-sovec
 //!
-//! `mouse\_sovec` defines `SoVec` for `mouse`, which behaves like `std::collections::Vec` .
+//! `mouse-sovec` defines `SoVec` for `mouse`, which behaves like `std::collections::Vec` .
 //!
 //! (`SoVec` stands for `Small optimized Vector` .)
 //!
