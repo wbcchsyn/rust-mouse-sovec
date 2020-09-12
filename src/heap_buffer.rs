@@ -52,7 +52,9 @@ impl<T> HeapBuffer<T> {
     {
         debug_assert_ne!(0, capacity);
 
-        let size = capacity * size_of::<T>();
+        let size = capacity
+            .checked_mul(size_of::<T>())
+            .expect("Allocating memory size is too large.");
         let align = align_of::<T>();
         let layout = Layout::from_size_align(size, align).unwrap_or_else(|e| panic!("{}", e));
 
@@ -104,7 +106,9 @@ impl<T> HeapBuffer<T> {
         debug_assert!(self.len() <= new_capacity);
 
         let layout = self.layout();
-        let new_size = new_capacity * size_of::<T>();
+        let new_size = new_capacity
+            .checked_mul(size_of::<T>())
+            .expect("Allocating memory size is too large.");
         let ptr = alloc.realloc(self.ptr as *mut u8, layout, new_size) as *mut T;
 
         if ptr.is_null() {
