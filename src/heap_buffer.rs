@@ -188,18 +188,6 @@ impl<T> Drop for HeapBuffer<T> {
     }
 }
 
-fn check_alloc<T>(ptr: *mut T) -> *mut T {
-    if ptr.is_null() {
-        panic!(alloc_error_message());
-    }
-
-    ptr
-}
-
-fn alloc_error_message() -> &'static str {
-    "Failed to allocate heap memory."
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
