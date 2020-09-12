@@ -31,6 +31,7 @@
 
 use core::alloc::{GlobalAlloc, Layout};
 use core::mem::{align_of, size_of};
+use std::alloc::handle_alloc_error;
 
 pub struct HeapBuffer<T> {
     ptr: *mut T,
@@ -45,10 +46,6 @@ impl<T> HeapBuffer<T> {
     /// # Safety
     ///
     /// `capacity` must not be 0.
-    ///
-    /// # Panics
-    ///
-    /// Panics if failed to allocate heap memory.
     pub unsafe fn with_capacity<A>(capacity: usize, alloc: &A) -> Self
     where
         A: GlobalAlloc,
@@ -60,6 +57,10 @@ impl<T> HeapBuffer<T> {
         let layout = Layout::from_size_align(size, align).expect(alloc_error_message());
 
         let ptr = alloc.alloc(layout) as *mut T;
+        if ptr.is_null() {
+            handle_alloc_error(layout);
+        }
+
         Self {
             ptr: check_alloc(ptr),
             len_: 0,
@@ -105,6 +106,12 @@ impl<T> HeapBuffer<T> {
         let layout = self.layout();
         let new_size = new_capacity * size_of::<T>();
         let ptr = alloc.realloc(self.ptr as *mut u8, layout, new_size) as *mut T;
+
+        if ptr.is_null() {
+            let layout = Layout::from_size_align(new_size, layout.align())
+                .unwrap_or_else(|e| panic!("{}", e));
+            handle_alloc_error(layout);
+        }
 
         self.ptr = check_alloc(ptr);
         self.cap_ = new_capacity;
