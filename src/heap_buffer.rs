@@ -54,7 +54,7 @@ impl<T> HeapBuffer<T> {
 
         let size = capacity * size_of::<T>();
         let align = align_of::<T>();
-        let layout = Layout::from_size_align(size, align).expect(alloc_error_message());
+        let layout = Layout::from_size_align(size, align).unwrap_or_else(|e| panic!("{}", e));
 
         let ptr = alloc.alloc(layout) as *mut T;
         if ptr.is_null() {
