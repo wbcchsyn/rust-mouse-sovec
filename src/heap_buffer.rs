@@ -62,7 +62,7 @@ impl<T> HeapBuffer<T> {
         }
 
         Self {
-            ptr: check_alloc(ptr),
+            ptr,
             len_: 0,
             cap_: capacity,
         }
@@ -111,10 +111,10 @@ impl<T> HeapBuffer<T> {
             let layout = Layout::from_size_align(new_size, layout.align())
                 .unwrap_or_else(|e| panic!("{}", e));
             handle_alloc_error(layout);
+        } else {
+            self.ptr = ptr;
+            self.cap_ = new_capacity;
         }
-
-        self.ptr = check_alloc(ptr);
-        self.cap_ = new_capacity;
     }
 
     /// Returns a raw pointer to the buffer.
