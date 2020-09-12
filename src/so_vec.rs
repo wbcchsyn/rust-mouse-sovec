@@ -63,10 +63,6 @@ where
     }
 
     /// Creates a new empty instance whose capacity is greater than or equals to `capacity` .
-    ///
-    /// # Panics
-    ///
-    /// Panics on heap memory allocation failure.
     pub fn with_capacity(capacity: usize, alloc: A) -> Self {
         let mut ret = Self::from(alloc);
 
@@ -122,10 +118,6 @@ where
     ///
     /// After this method is called, `self.capacity` will return the number
     /// to be greater than or equals to `self.len() + additional` .
-    ///
-    /// # Panics
-    ///
-    /// Panics on heap allocation failure.
     pub fn reserve_exact(&mut self, additional: usize) {
         let new_capacity = self.len() + additional;
 
